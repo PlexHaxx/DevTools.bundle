@@ -1,0 +1,8 @@
+[
+	{
+		"id":"Home",
+		"label":"Where the PMS is located in the filesystem",
+		"type":"text",
+		"default":""
+	}
+]
