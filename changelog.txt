@@ -1,3 +1,9 @@
+V0.0.0.4:
+- Added the following:
+		DelFile(Secret, File)
+			Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.txt
+				Note: remember to fill out spaces in the filename with %20
+
 V0.0.0.3:
 - Added the following:
 		DelOSSrt(Secret, Bundle, SrtFile)

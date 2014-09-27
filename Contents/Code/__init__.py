@@ -31,7 +31,12 @@
 #
 # Delete a subtitle file downloaded by the OpenSubtitle PlugIn
 #		#	DelOSSrt(Secret, Bundle, SrtFile)
-#			Call like: http://qnap2:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
+#				Call like: http://PMS:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
+#
+# Delete a file from the filesystem (Aka asidecar srt file....Use with care here)
+#		# def DelFile(Secret, File)
+#				Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.ged
+#				Note: remember to fill out spaces in the filename with %20
 #
 ####################################################################################################
 #TODO
@@ -44,7 +49,7 @@ import urllib
 import os
 
 #********** Constants needed ************
-VERSION = '0.0.0.3'
+VERSION = '0.0.0.4'
 NAME = 'DevTools'
 PREFIX = '/utils/devtools'
 ART = 'art-default.jpg'
@@ -91,6 +96,8 @@ def MainMenu(Func='', Secret='', **kwargs):
 		return GetOSXml(Secret, kwargs.get("Bundle"))
 	elif Func=='DelOSSrt':
 		return DelOSSrt(Secret, kwargs.get("Bundle"), kwargs.get("SrtFile"))
+	elif Func=='DelFile':
+		return DelFile(Secret, kwargs.get("File"))
 
 ####################################################################################################
 # Check Secret
@@ -174,6 +181,22 @@ def DelOSSrt(Secret, Bundle, SrtFile):
 		nukeFile = os.path.join(Core.app_support_path, 'Media', 'localhost', Bundle[:1], Bundle[1:] + '.bundle', 'Contents', 'Subtitle Contributions', 'com.plexapp.agents.opensubtitles', myResult )
 		try:
 			os.remove(nukeFile)
+			return 'ok'
+		except OSError:
+			return 'error'
+	else:
+		return ERRORAUTH
+
+####################################################################################################
+# Delete a file
+####################################################################################################
+''' Delete a file.	Returns ok if all goes well '''
+@route(PREFIX + '/DelFile')
+def DelFile(Secret, File):
+	if PwdOK(Secret):		
+		# Now we got the filename and dir name, so let's nuke the file
+		try:
+			os.remove(File)
 			return 'ok'
 		except OSError:
 			return 'error'
