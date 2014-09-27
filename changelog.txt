@@ -1,19 +1,23 @@
 V0.0.0.3:
 - Added the following:
-		# DelOSSrt(Secret, Bundle, SrtFile)
-				Call like: http://qnap2:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
+		DelOSSrt(Secret, Bundle, SrtFile)
+			Call like: http://qnap2:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
 
 V0.0.0.2:
 - Switched away from using prefs....Note that it's not backwards compatible with V0.0.0.1
 - Added the following:
-		# Returns the path to ~Library/Plex Media Server
-		#		GetLibPath(Secret)						: Call like http://PMS:32400/utils/devtools?Func=GetLibPath&Secret=1234
-		# Returns the contents of an xml file
-		# 	GetXMLFile(Secret, Path)			: Call like http://PMS:32400/utils/devtools?Func=GetXMLFile&Secret=1234&Path=<Path to file>
-		# Return the version of this plugin
-		# 	GetVersion(Secret)						: Call like http://PMS:32400/utils/devtools?Func=GetVersion&Secret=1234
-		# Return the contents of an OpenSubTitle XML file for a bundle
-		#		GetOSXml(Secret, Bundle)	: Call like http://PMS:32400/utils/devtools?Func=GetOSXml&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449
+			Returns the path to ~Library/Plex Media Server
+				GetLibPath(Secret)
+					Call like http://PMS:32400/utils/devtools?Func=GetLibPath&Secret=1234
+			Returns the contents of an xml file
+				GetXMLFile(Secret, Path)
+					Call like http://PMS:32400/utils/devtools?Func=GetXMLFile&Secret=1234&Path=<Path to file>
+			Return the version of this plugin
+				GetVersion(Secret)
+					Call like http://PMS:32400/utils/devtools?Func=GetVersion&Secret=1234
+			Return the contents of an OpenSubTitle XML file for a bundle
+				GetOSXml(Secret, Bundle)
+					Call like http://PMS:32400/utils/devtools?Func=GetOSXml&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449
 
 V0.0.0.1:
 - Supports getting the Home of the Library/PMS
