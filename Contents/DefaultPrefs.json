@@ -1,8 +1,9 @@
 [
 	{
-		"id":"Home",
-		"label":"Where the PMS is located in the filesystem",
+		"id":"Secret",
+		"label":"Shared secret between DevTools and 3.Party",
 		"type":"text",
-		"default":""
+		"default":"",
+		"option":"hidden"
 	}
 ]
