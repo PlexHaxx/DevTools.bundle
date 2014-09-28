@@ -30,13 +30,17 @@
 #			Call like http://PMS:32400/utils/devtools?Func=GetOSXml&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449
 #
 # Delete a subtitle file downloaded by the OpenSubtitle PlugIn
-#		#	DelOSSrt(Secret, Bundle, SrtFile)
-#				Call like: http://PMS:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
+#		DelOSSrt(Secret, Bundle, SrtFile)
+#			Call like: http://PMS:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
 #
 # Delete a file from the filesystem (Aka asidecar srt file....Use with care here)
-#		# def DelFile(Secret, File)
-#				Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.ged
+#		DelFile(Secret, File)
+#			Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.ged
 #				Note: remember to fill out spaces in the filename with %20
+#
+# Check if a file or directory exists Returns true if it does, and false if not
+#		PathExists(Secret, Path)
+#			Call like: http://PMS:32400/utils/devtools?Func=PathExists&Secret=1234&Path=/root/Library
 #
 ####################################################################################################
 #TODO
@@ -49,7 +53,7 @@ import urllib
 import os
 
 #********** Constants needed ************
-VERSION = '0.0.0.4'
+VERSION = '0.0.0.5'
 NAME = 'DevTools'
 PREFIX = '/utils/devtools'
 ART = 'art-default.jpg'
@@ -98,6 +102,8 @@ def MainMenu(Func='', Secret='', **kwargs):
 		return DelOSSrt(Secret, kwargs.get("Bundle"), kwargs.get("SrtFile"))
 	elif Func=='DelFile':
 		return DelFile(Secret, kwargs.get("File"))
+	elif Func=='PathExists':
+		return PathExists(Secret, kwargs.get("Path"))		
 
 ####################################################################################################
 # Check Secret
@@ -200,6 +206,21 @@ def DelFile(Secret, File):
 			return 'ok'
 		except OSError:
 			return 'error'
+	else:
+		return ERRORAUTH
+
+####################################################################################################
+# Check if a path exists
+####################################################################################################
+''' Check if a path exists.	Returns true if if it does, else false '''
+@route(PREFIX + '/PathExists')
+def PathExists(Secret, Path):
+	if PwdOK(Secret):		
+		# Now we got the filename and dir name, so let's nuke the file
+		if os.path.exists(Path):
+			return 'true'
+		else:
+			return 'false'				
 	else:
 		return ERRORAUTH
 
