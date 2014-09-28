@@ -1,8 +1,7 @@
 DevTools.bundle
 ===============
 
-This bundle will assist 3.Party developers in locating the 
-file path to the 'Library/Plex Media Server' directory
+This bundle will assist 3.Party developers in accessin info and files on a server running PMS
 
 To see futher info, look in the wiki 
 
