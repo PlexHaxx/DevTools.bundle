@@ -1,7 +1,7 @@
 DevTools.bundle
 ===============
 
-This bundle will assist 3.Party developers in accessin info and files on a server running PMS
+This bundle will assist 3.Party developers in accessin info and files on a server running PMS (Plex Media Server)
 
 To see futher info, look in the wiki 
 
