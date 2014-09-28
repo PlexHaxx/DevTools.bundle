@@ -1,3 +1,8 @@
+V0.0.0.6:
+-Added the following:
+		ShowSRT(Secret, FileName)
+			Call like: http://PMS:32400/utils/devtools?Func=ShowSRT&Secret=1234&FileName=/root/Library/Plex%20Media%20Server/Media/localhost/b/4c657e372488b460b64d38d7d78ae7851343eaf.bundle/Contents/Subtitles/en/com.plexapp.agents.opensubtitles_ec8dd1a2f67607d603bcbc170e856bbfe53834e6.srt
+
 V0.0.0.5:
 - Added the following:
 		PathExists(Secret, Path)

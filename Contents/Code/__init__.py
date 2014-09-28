@@ -34,7 +34,7 @@
 #			Call like: http://PMS:32400/utils/devtools?Func=DelOSSrt&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449&SrtFile=94e38a0053dadb3c8ae0078c1571054f4fe65f96.srt
 #
 # Delete a file from the filesystem (Aka asidecar srt file....Use with care here)
-#		DelFile(Secret, File)
+#		DelFile(Secret, FileName)
 #			Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.ged
 #				Note: remember to fill out spaces in the filename with %20
 #
@@ -42,6 +42,9 @@
 #		PathExists(Secret, Path)
 #			Call like: http://PMS:32400/utils/devtools?Func=PathExists&Secret=1234&Path=/root/Library
 #
+# Show the contents of a txt-based file, like an srt file
+#		ShowSRT(Secret, FileName)
+#			Call like: http://PMS:32400/utils/devtools?Func=ShowSRT&Secret=1234&FileName=/root/Library/Plex%20Media%20Server/Media/localhost/b/4c657e372488b460b64d38d7d78ae7851343eaf.bundle/Contents/Subtitles/en/com.plexapp.agents.opensubtitles_ec8dd1a2f67607d603bcbc170e856bbfe53834e6.srt
 ####################################################################################################
 #TODO
 # Hash Secret pwd.....Needs to be hashed as well on the client
@@ -51,9 +54,10 @@
 import xml.etree.ElementTree as et
 import urllib
 import os
+import io
 
 #********** Constants needed ************
-VERSION = '0.0.0.5'
+VERSION = '0.0.0.6'
 NAME = 'DevTools'
 PREFIX = '/utils/devtools'
 ART = 'art-default.jpg'
@@ -103,7 +107,9 @@ def MainMenu(Func='', Secret='', **kwargs):
 	elif Func=='DelFile':
 		return DelFile(Secret, kwargs.get("File"))
 	elif Func=='PathExists':
-		return PathExists(Secret, kwargs.get("Path"))		
+		return PathExists(Secret, kwargs.get("Path"))
+	elif Func=='ShowSRT':
+		return ShowSRT(Secret, kwargs.get("FileName"))
 
 ####################################################################################################
 # Check Secret
@@ -223,5 +229,18 @@ def PathExists(Secret, Path):
 			return 'false'				
 	else:
 		return ERRORAUTH
+
+####################################################################################################
+# Show contents of a txt file
+####################################################################################################
+''' Show contents of a txt file '''
+@route(PREFIX + '/ShowSRT')
+def ShowSRT(Secret, FileName):
+	if PwdOK(Secret):
+		with io.open (FileName, "r") as myfile:		
+			return myfile.read()
+	else:
+		return ERRORAUTH
+
 
 
