@@ -1,3 +1,7 @@
+V0.0.0.7:
+-Added the following:
+	DelFile now refuse to delete an srt file
+
 V0.0.0.6:
 -Added the following:
 		ShowSRT(Secret, FileName)

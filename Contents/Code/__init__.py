@@ -57,7 +57,7 @@ import os
 import io
 
 #********** Constants needed ************
-VERSION = '0.0.0.6'
+VERSION = '0.0.0.7'
 NAME = 'DevTools'
 PREFIX = '/utils/devtools'
 ART = 'art-default.jpg'
@@ -208,8 +208,13 @@ def DelFile(Secret, File):
 	if PwdOK(Secret):		
 		# Now we got the filename and dir name, so let's nuke the file
 		try:
-			os.remove(File)
-			return 'ok'
+			fileName, fileExtension = os.path.splitext(File.upper())
+			Log.Debug('Trying to delete the file %s' %(File))
+			if fileExtension != '.SRT':
+				os.remove(File)
+				return 'ok'
+			else:
+				return 'error....Deleting an srt file is not supported with this function....use DelSRT function instead'
 		except OSError:
 			return 'error'
 	else:
