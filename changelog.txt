@@ -1,3 +1,16 @@
+V0.0.0.8:
+- Removed DelSRT function
+- Added DelSub function
+	* Initially same function, but now also works for other ext. than srt
+	* DelSub(Secret, MediaID, SubFileID)
+		 * Call like: http://PMS:32400/utils/devtools?Func=DelSub&Secret=1234&MediaID=2&SubFileID=109
+- ShowSRT
+	Fixed (Hopefully) error when detecting an non UTF-8 caracter
+
+V0.0.0.7:
+- Added the following:
+	DelFile now refuse to delete an srt file
+
 V0.0.0.6:
 -Added the following:
 		ShowSRT(Secret, FileName)
