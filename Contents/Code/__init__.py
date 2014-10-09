@@ -243,7 +243,6 @@ def DelSub(Secret, MediaID, SubFileID):
 							myAgent = re.search('Contents/Subtitles/(.*)', mySub).group(1)					
 						except:
 							Log.Debug('Error digesting string %s' %(mySub))		
-						print myAgent
 						# Now seperate the lang code
 						lang, myAgent = myAgent.split("/")
 						# Let's get the filename
