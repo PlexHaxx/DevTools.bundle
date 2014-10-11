@@ -1,115 +1,128 @@
-####################################################################################################
-#	This plugin will assist for 3.Party developers running apps not on the PMS
-# to access it's filesystem if needed
+######################################################################################################################
+#					WebTools bundle for Plex
 #
-# Currently limited functions are avail, but do request, and I'll see what I can do
+#					Allows you to manipulate subtitles on Plex Media Server
 #
-# Install it as a regular channel, and afterwards, from PMS, open the channel
-# settings, and enter a secret password, that can be shared between a 3.Party
-# utillity and this plug-in
+#					Author:			dagaluf, a Plex Community member
+#					Author:			dane22, a Plex Community member
 #
-#	Made by 
-#	dane22....A Plex Community member
+#					Support thread:	https://forums.plex.tv/index.php/topic/119940-webtool-subtitle-manager-development/
 #
-#	Provided functions are:
-#
-# Returns the path to ~Library/Plex Media Server
-#		GetLibPath(Secret)
-#			Call like http://PMS:32400/utils/devtools?Func=GetLibPath&Secret=1234
-#
-# Returns the contents of an xml file
-# 	GetXMLFile(Secret, Path)
-#			Call like http://PMS:32400/utils/devtools?Func=GetXMLFile&Secret=1234&Path=<Path to file>
-#
-# Return the version of this plugin
-# 	GetVersion(Secret)
-#			Call like http://PMS:32400/utils/devtools?Func=GetVersion&Secret=1234
-#
-# Return the contents of an OpenSubTitle XML file for a bundle
-#		GetOSXml(Secret, Bundle)
-#			Call like http://PMS:32400/utils/devtools?Func=GetOSXml&Secret=1234&Bundle=1e0f180c5eb1a91a2e8d10e341a3050ceb429449
-#
-# Delete a file from the filesystem (Aka asidecar srt file....Use with care here)
-#		DelFile(Secret, FileName)
-#			Call like: http://PMS:32400/utils/devtools?Func=DelFile&Secret=1234&File=/share/MD0_DATA/.qpkg/PlexMediaServer/Library/Plex%20Media%20Server/test.ged
-#				Note: remember to fill out spaces in the filename with %20
-#
-# Check if a file or directory exists Returns true if it does, and false if not
-#		PathExists(Secret, Path)
-#			Call like: http://PMS:32400/utils/devtools?Func=PathExists&Secret=1234&Path=/root/Library
-#
-# Show the contents of a txt-based file, like an srt file
-#		ShowSRT(Secret, FileName)
-#			Call like: http://PMS:32400/utils/devtools?Func=ShowSRT&Secret=1234&FileName=/root/Library/Plex%20Media%20Server/Media/localhost/b/4c657e372488b460b64d38d7d78ae7851343eaf.bundle/Contents/Subtitles/en/com.plexapp.agents.opensubtitles_ec8dd1a2f67607d603bcbc170e856bbfe53834e6.srt
-#
-# Delete an Sub file, and update all xml files involved
-#		DelSub(Secret, MediaID, SubFileID)
-#			Call like: http://PMS:32400/utils/devtools?Func=DelSub&Secret=1234&MediaID=2&SubFileID=109
-#
-####################################################################################################
-#TODO
-# Hash Secret pwd.....Needs to be hashed as well on the client
-####################################################################################################
+######################################################################################################################
 
-#**********  Imports needed *************
-import xml.etree.ElementTree as et
-import urllib
-import os
-import io
-
-#********** Constants needed ************
-VERSION = '0.0.0.8'
-NAME = 'DevTools'
-PREFIX = '/utils/devtools'
-ART = 'art-default.jpg'
-ICON = 'DevTools.png'
+#********* Constants used **********
+PLUGIN_VERSION = '0.0.0.4'
+PREFIX = '/utils/webtools'
+NAME = 'WebTools'
+ART  = 'art-default.jpg'
+ICON = 'icon-default.png'
+MYSECRET = 'BarkleyIsAFineDog'
 ERRORAUTH = 'Error authenticating'
 
-####################################################################################################
-# Start function
-####################################################################################################
-def Start():
-	print("********  Started %s V%s on %s  **********" %(NAME, VERSION, Platform.OS))
-	Log.Debug("*******  Started %s V%s on %s  ***********" %(NAME, VERSION, Platform.OS))
-	HTTP.CacheTime = 0
-	Plugin.AddViewGroup('List', viewMode='List', mediaType='items')
-	ObjectContainer.art = R(ART)
-	ObjectContainer.title1 = NAME  + ' V' + VERSION
-	ObjectContainer.view_group = 'List'
-	DirectoryObject.thumb = R(ICON)
+#********** Imports needed *********
+import os, io
+from subprocess import call
 
-####################################################################################################
-# Main function
-####################################################################################################
-''' Main menu '''
-@handler(PREFIX, NAME, thumb=ICON, art=ART)
-def MainMenu(Func='', Secret='', **kwargs):
-	Log.Debug("***** Got a call for function %s with a secret of %s  ******" %(Func, Secret))
-	if Func=='':
-		# We most likely called this from the WebAdmin interface
-		oc = ObjectContainer()
-		oc.add(DirectoryObject(key=Callback(MainMenu), title="Select Preferences to set the shared secret"))
-		oc.add(PrefsObject(title='Preferences', thumb=R('icon-prefs.png')))
-		return oc
-	elif Func=='GetLibPath':
-		return GetLibPath(Secret)
-	elif Func=='GetXMLFile':
-		return GetXMLFile(Secret, kwargs.get("Path"))
-	elif Func=='GetVersion':
-		if PwdOK(Secret):
-			return VERSION
+#********** Initialize *********
+def Start():
+	print("********  Started %s on %s  **********" %(NAME  + ' V' + PLUGIN_VERSION, Platform.OS))
+	Log.Debug("*******  Started %s on %s  ***********" %(NAME + ' V' + PLUGIN_VERSION, Platform.OS))
+	HTTP.CacheTime = 0
+	ObjectContainer.art = R(ART)
+	DirectoryObject.thumb = R(ICON)
+	ObjectContainer.title1 = NAME + ' V' + PLUGIN_VERSION 
+	Plugin.AddViewGroup('List', viewMode='List', mediaType='items')
+	ObjectContainer.view_group = 'List'
+	setupSymbLink()
+
+#********** Create Website *********
+''' Create symbolic links in the WebClient, so we can access this bundle frontend via a browser directly '''
+@route(PREFIX + '/setup')
+def setupSymbLink():
+	src = Core.storage.join_path(Core.app_support_path, 'Plug-ins', NAME + '.bundle', 'http')
+	dst = Core.storage.join_path(Core.app_support_path, 'Plug-ins', 'WebClient.bundle', 'Contents', 'Resources', NAME)
+	if not os.path.lexists(dst):
+		if Platform.OS=='Windows':
+			Log.Debug('Darn ' + Platform.OS)
+			# Cant create a symb link on Windows, until Plex moves to Python 3.3
+			#call(["C:\Users\TM\AppData\Local\Plex Media Server\Plug-ins\WebTools.bundle\RightClick_Me_And_Select_Run_As_Administrator.cmd"])
 		else:
-			return ERRORAUTH
-	elif Func=='GetOSXml':
-		return GetOSXml(Secret, kwargs.get("Bundle"))
-	elif Func=='DelFile':
-		return DelFile(Secret, kwargs.get("File"))
+
+		# This creates a symbolic link for the bundle in the WebClient.
+		# URL is http://<IP of PMS>:32400/web/WebTools/index.html
+			os.symlink(src, dst)
+			Log.Debug("SymbLink not there, so creating %s pointing towards %s" %(dst, src))
+	else:
+		Log.Debug("SymbLink already present")
+
+#********** Main function *********
+''' Main menu '''
+@handler(PREFIX, NAME, ICON, ART)
+@route(PREFIX + '/MainMenu')
+def MainMenu(Func='', Secret='', **kwargs):
+	if Func=='':
+		Log.Debug("**********  Starting MainMenu  **********")	
+		oc = ObjectContainer()
+		if setPMSPath():
+			oc.add(DirectoryObject(key=Callback(MainMenu), title="To access this channel, go to"))
+			oc.add(DirectoryObject(key=Callback(MainMenu), title='http://' + Prefs['PMS_Path'] + ':32400/web/' + NAME + '/index.html'))
+		else:
+			oc.add(DirectoryObject(key=Callback(MainMenu), title="Bad or missing settings"))	
+			oc.add(DirectoryObject(key=Callback(MainMenu), title="Select Preferences to set ip address of the PMS"))
+			oc.add(DirectoryObject(key=Callback(MainMenu), title="Afterwards, refresh this page"))
+		oc.add(PrefsObject(title='Preferences', thumb=R('icon-prefs.png')))
+		Log.Debug("**********  Ending MainMenu  **********")
+		return oc
+	# Here comes the functions avail
 	elif Func=='PathExists':
 		return PathExists(Secret, kwargs.get("Path"))
 	elif Func=='ShowSRT':
 		return ShowSRT(Secret, kwargs.get("FileName"))
 	elif Func=='DelSub':
 		return DelSub(Secret, kwargs.get("MediaID"), kwargs.get("SubFileID"))
+	elif Func=='GetXMLFile':
+		return GetXMLFile(Secret, kwargs.get("Path"))
+	elif Func=='GetLibPath':
+		return GetLibPath(Secret)
+
+####################################################################################################
+# Set PMS Path
+####################################################################################################
+@route(PREFIX + '/setPMSPath')
+def setPMSPath():
+	Log.Debug('Entering setPMSPath')
+	# Let's check if the PMS path is valid
+	myPath = Prefs['PMS_Path']
+	Log.Debug('My master set the Export path to: %s' %(myPath))
+	try:
+		#Let's see if we can add out subdirectory below this
+		tmpTest = XML.ElementFromURL('http://' + myPath + ':32400')
+		return True		
+	except:
+		Log.Critical('Bad pmsPath')
+		return False
+
+####################################################################################################
+# ValidatePrefs
+####################################################################################################
+@route(PREFIX + '/ValidatePrefs')
+def ValidatePrefs():
+	if setPMSPath():
+		Log.Debug('Prefs are valid, so lets update the js file')
+		myFile = os.path.join(Core.app_support_path, 'Plug-ins', NAME + '.bundle', 'http', 'jscript', 'settings.js')
+		global MYSECRET 
+		MYSECRET = Hash.MD5(Prefs['PMS_Path'])
+		print MYSECRET
+		with io.open(myFile) as fin, io.open(myFile + '.tmp', 'w') as fout:
+			for line in fin:
+				if 'var Secret =' in line:
+					line = 'var Secret = "' + MYSECRET + '";\n'
+				elif 'var PMSUrl =' in line:
+					line = 'var PMSUrl = "' + Prefs['PMS_Path'] + '";\n'					
+				fout.write(unicode(line))
+		os.rename(myFile, myFile + '.org')
+		os.rename(myFile + '.tmp', myFile)
+	return
 
 ####################################################################################################
 # Check Secret
@@ -118,72 +131,10 @@ def MainMenu(Func='', Secret='', **kwargs):
 Returns true is okay, and else false '''
 @route(PREFIX + '/PwdOK')
 def PwdOK(Secret):
-	if (Prefs['Secret'] == Secret):
+	if (Hash.MD5(Prefs['PMS_Path']) == Secret):
 		return True
 	else:
 		return False
-
-####################################################################################################
-# Return path to PMS/Library
-####################################################################################################
-''' Return path to PMS/Library '''
-@route(PREFIX + '/GetLibPath')
-def GetLibPath(Secret):
-	if PwdOK(Secret):
-		Log.Debug('Returning Library path as %s' %(Core.app_support_path))
-		return Core.app_support_path
-	else:
-		return ERRORAUTH
-
-####################################################################################################
-# Returns the contents of an XML file
-####################################################################################################
-''' Returns the contents of an XML file '''
-@route(PREFIX + '/GetXMLFile')
-def GetXMLFile(Secret, Path):
-	if PwdOK(Secret):
-		Log.Debug('Getting contents of an XML file named %s' %(Path))
-		document = et.parse( Path )
-		root = document.getroot()
-		return et.tostring(root, encoding='utf8', method='xml')
-	else:
-		return ERRORAUTH
-
-####################################################################################################
-# Returns the contents of an OpenSubtitle XML file
-####################################################################################################
-''' Returns the contents of an OpenSubtitle XML file '''
-@route(PREFIX + '/GetOSXml')
-def GetOSXml(Secret, Bundle):
-	if PwdOK(Secret):
-		myFile = os.path.join(Core.app_support_path, 'Media', 'localhost', Bundle[:1], Bundle[1:] + '.bundle', 'Contents', 'Subtitle Contributions', 'com.plexapp.agents.opensubtitles.xml')
-		Log.Debug('Getting contents of an OS XML file named %s' %(myFile))
-		document = et.parse( myFile )
-		root = document.getroot()
-		return et.tostring(root, encoding='utf8', method='xml')
-	else:
-		return ERRORAUTH
-
-####################################################################################################
-# Delete a file
-####################################################################################################
-''' Delete a file.	Returns ok if all goes well '''
-@route(PREFIX + '/DelFile')
-def DelFile(Secret, File):
-	if PwdOK(Secret):		
-		# Now we got the filename and dir name, so let's nuke the file
-		try:
-			fileName, fileExtension = os.path.splitext(File.upper())
-			Log.Debug('Trying to delete the file %s' %(File))
-			if fileExtension != '.SRT':
-				os.remove(File)
-				return 'ok'
-			else:
-				return 'error....Deleting an srt file is not supported with this function....use DelSRT function instead'
-		except OSError:
-			return 'error'
-	else:
-		return ERRORAUTH
 
 ####################################################################################################
 # Check if a path exists
@@ -301,4 +252,30 @@ def DelFromXML(fileName, attribute, value):
 						Subtitles.remove(node)
 	tree.write(fileName, encoding='utf-8', xml_declaration=True)
 	return
+
+####################################################################################################
+# Returns the contents of an XML file
+####################################################################################################
+''' Returns the contents of an XML file '''
+@route(PREFIX + '/GetXMLFile')
+def GetXMLFile(Secret, Path):
+	if PwdOK(Secret):
+		Log.Debug('Getting contents of an XML file named %s' %(Path))
+		document = et.parse( Path )
+		root = document.getroot()
+		return et.tostring(root, encoding='utf8', method='xml')
+	else:
+		return ERRORAUTH
+
+####################################################################################################
+# Return path to PMS/Library
+####################################################################################################
+''' Return path to PMS/Library '''
+@route(PREFIX + '/GetLibPath')
+def GetLibPath(Secret):
+	if PwdOK(Secret):
+		Log.Debug('Returning Library path as %s' %(Core.app_support_path))
+		return Core.app_support_path
+	else:
+		return ERRORAUTH
 
